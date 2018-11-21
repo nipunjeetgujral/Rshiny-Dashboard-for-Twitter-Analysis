@@ -1,0 +1,181 @@
+---
+title: Functions for the Shiny Applicaion Using Twitter Data
+author: Nipunjeet Gujral
+data: May 27th, 2018
+output: 
+  html_document:
+    theme: spacelab
+    highlight: neon
+---
+
+##### Setup
+```{r libraries, message=FALSE, warning=FALSE}
+# markdown related
+library(rmarkdown)
+
+# library to attach to twitter API
+library(twitteR)
+
+# library to manipulate data
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(tidytext)
+library(tm)
+
+# library to visualize data
+library(wordcloud)
+library(RColorBrewer)
+library(plotly)
+library(ggplot2)
+
+# shiny related
+library(shiny)
+library(shinydashboard)
+```
+
+```{r authentication, echo=FALSE, message=FALSE, warning=FALSE}
+authentication <- function(x){
+  consumer_key = "______"
+  consumer_secret = "___"
+  access_token = "______"
+  access_secret = "_____"
+  setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+}
+```
+
+```{r froming tweet df, message=FALSE, warning=FALSE, echo=FALSE}
+pull_tweets <- function(twitter_handle, n){
+      tweets <- userTimeline(user = twitter_handle,                                            # pull tweets
+                             n = n, 
+                             excludeReplies = TRUE) %>%                                        # source tweets
+              twListToDF() %>%                                                                 # reformat into dataframe
+              dplyr::select(text, created, retweetCount, favoriteCount, statusSource, id) %>%  # select useful rows
+              dplyr::mutate(ratio = retweetCount/favoriteCount,                                # ratio: retweet/favorite
+                            new_tz = format(created, tz = "America/Los_Angeles"),              # new time zone
+                            day_of_week = wday(new_tz, label = TRUE),                          # day of the week 
+                            hour = hour(new_tz),                                               # hour 
+                            month = month(new_tz))                                             # month
+      return(tweets)
+}
+```
+
+
+##### Analysing Tweeting Habits
+```{r tweets per day, message=FALSE, warning=FALSE}
+# create a bar chart depicting the days tweets are created
+
+tweets_per_day <- function(temp_tweets){
+  freq_table <- data.frame(table(temp_tweets$day_of_week)) # forming a dataframe of frequncy per day
+  plot <- plot_ly(x = freq_table$Var1,                     # plotting 
+                  y = freq_table$Freq,
+                  type = "bar") %>% 
+    layout(title = "Tweets per Day of the Week")
+  
+  return(plot)
+}
+```
+
+```{r tweets per hour, message=FALSE, warning=FALSE}
+tweets_per_hour <- function(temp_tweets){
+# create a line plot depicting the time at which a tweet was created
+  
+  freq_table <- data.frame(table(temp_tweets$hour))               # forming data frame of frequency per hour
+  plot <- plot_ly(x = freq_table$Var1,                            # plotting 
+                  y = freq_table$Freq,
+                  type = "scatter",
+                  mode = "line+markers") %>% 
+      layout(title = "Distribution of Tweets in a Day(PDT Time)",
+           xaxis = list(title = "Hour (PDT)"),
+           yaxis = list(title = "Frequency"))
+  
+  return(plot)
+}
+```
+
+```{r soure piechaart, message=FALSE, warning=FALSE}
+tweet_source <- function(temp_tweets){
+# create a pie graphs depicting the source from which the tweet was sent 
+  
+    temp <- str_extract(temp_tweets$statusSource, ">(.*)<")   # selecting all characters between "><"
+    temp <- gsub('<', "", temp)                               # removing the "<"
+    temp <- gsub('>', "", temp)                               # removing the ">"
+    
+    temp_df <- data.frame(table(temp))                        # tabling the frequency of sources
+    colnames(temp_df) <- c("source", "freq")                  # changing column names accorindingly
+     
+    pie <- plot_ly(data = temp_df,                            # plotting
+                   labels = ~source,
+                   values = ~freq,
+                   type = "pie",
+                   textinfo = 'label+percent',
+                   textposition = 'inside')
+    return(pie)
+}
+```
+
+
+##### Analysing User Engagment
+```{r retweet vs favorited, message=FALSE, warning=FALSE}
+fav_vs_retweet <- function(temp_tweets) {
+# illustrate the point the fact that user engagment mearured via Retweet Count and Favorited Count have a strong, posative correlation
+  
+  fit <- lm(temp_tweets$retweetCount ~ temp_tweets$favoriteCount)  # linear regression betwenn RT and Fav
+  plot <- plot_ly(data = temp_tweets,                              # plotting
+                  x = ~favoriteCount,                                               
+                  y = ~retweetCount, 
+                  type = "scatter") %>% 
+    add_lines(x = ~favoriteCount,
+              y = fitted(fit)) %>% 
+    layout(title = "Retweet vs. Favorited Count",
+           xaxis = list(title = "Favorited Count"),
+           yaxis = list(title = "Retweet Count"))
+  
+  return(plot)
+}
+```
+
+```{r ratio vs created, message=FALSE, warning=FALSE}
+ratio_vs_time <- function(temp_tweets){
+# illustrate how the twitter API samples tweets according to time
+  
+  plot <- plot_ly(data = temp_tweets,      # plotting ratio vs. time
+               x = ~created, y = ~ratio,
+               type = "scatter")
+  return(plot)
+}
+```
+
+```{r retweet and favorited histogramn, message=FALSE, warning=FALSE}
+distributions <- function(temp_tweets){
+# analyse the distributions of the Retweet Count and Favorited Count metrics
+  
+  plot <- plot_ly(data = temp_tweets,         # plotting both RT and Fav distribution
+             alpha = 0.6) %>%
+    add_histogram(x = ~retweetCount, name = "Retweet") %>%
+    add_histogram(x = ~favoriteCount, name = "Favorited") %>%
+    layout(barmode = "overlay",
+           xaxis = list(title = " "),
+           title = "Distributions of Retweet and Favorited Counts")
+  
+  return(plot)
+}
+```
+
+##### Outputs
+```{r Function Calls, message=FALSE, warning=FALSE}
+# setup
+authentication()
+temp_tweets <- pull_tweets("elonmusk", 1000)
+View(temp_tweets)
+# time analysis
+tweets_per_day(temp_tweets)
+tweets_per_hour(temp_tweets)
+ratio_vs_time(temp_tweets)
+# variable distribution
+fav_vs_retweet(temp_tweets)
+distributions(temp_tweets)
+# source
+tweet_source(temp_tweets)
+```
+
