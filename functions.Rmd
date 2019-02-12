@@ -8,7 +8,7 @@ output:
     highlight: neon
 ---
 
-##### Setup
+### Setup
 ```{r libraries, message=FALSE, warning=FALSE}
 # markdown related
 library(rmarkdown)
@@ -34,6 +34,7 @@ library(shiny)
 library(shinydashboard)
 ```
 
+### Key authentication
 ```{r authentication, echo=FALSE, message=FALSE, warning=FALSE}
 authentication <- function(x){
   consumer_key = "______"
@@ -44,6 +45,7 @@ authentication <- function(x){
 }
 ```
 
+### Creating a Dataframe
 ```{r froming tweet df, message=FALSE, warning=FALSE, echo=FALSE}
 pull_tweets <- function(twitter_handle, n){
       tweets <- userTimeline(user = twitter_handle,                                            # pull tweets
@@ -60,7 +62,6 @@ pull_tweets <- function(twitter_handle, n){
 }
 ```
 
-
 ##### Analysing Tweeting Habits
 ```{r tweets per day, message=FALSE, warning=FALSE}
 # create a bar chart depicting the days tweets are created
@@ -76,6 +77,7 @@ tweets_per_day <- function(temp_tweets){
 }
 ```
 
+### Line chart of tweets per time
 ```{r tweets per hour, message=FALSE, warning=FALSE}
 tweets_per_hour <- function(temp_tweets){
 # create a line plot depicting the time at which a tweet was created
@@ -93,7 +95,8 @@ tweets_per_hour <- function(temp_tweets){
 }
 ```
 
-```{r soure piechaart, message=FALSE, warning=FALSE}
+### Creating a pie chart
+```{r soure piechart, message=FALSE, warning=FALSE}
 tweet_source <- function(temp_tweets){
 # create a pie graphs depicting the source from which the tweet was sent 
   
@@ -114,8 +117,7 @@ tweet_source <- function(temp_tweets){
 }
 ```
 
-
-##### Analysing User Engagment
+### Regression betweeen Favorited and Retweet count
 ```{r retweet vs favorited, message=FALSE, warning=FALSE}
 fav_vs_retweet <- function(temp_tweets) {
 # illustrate the point the fact that user engagment mearured via Retweet Count and Favorited Count have a strong, posative correlation
@@ -135,6 +137,7 @@ fav_vs_retweet <- function(temp_tweets) {
 }
 ```
 
+### Scatterplot between Retweet/Favorited and time
 ```{r ratio vs created, message=FALSE, warning=FALSE}
 ratio_vs_time <- function(temp_tweets){
 # illustrate how the twitter API samples tweets according to time
@@ -146,6 +149,7 @@ ratio_vs_time <- function(temp_tweets){
 }
 ```
 
+### Histogram of days tweeted
 ```{r retweet and favorited histogramn, message=FALSE, warning=FALSE}
 distributions <- function(temp_tweets){
 # analyse the distributions of the Retweet Count and Favorited Count metrics
@@ -162,7 +166,7 @@ distributions <- function(temp_tweets){
 }
 ```
 
-##### Outputs
+### Outputs
 ```{r Function Calls, message=FALSE, warning=FALSE}
 # setup
 authentication()
